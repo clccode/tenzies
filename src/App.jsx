@@ -14,8 +14,8 @@ export default function App() {
     const [dice, setDice] = useState(allNewDice())
     const [tenzies, setTenzies] = useState(false)
     const [rolls, setRolls] = useState(0)
-    const [bestRoll, setBestRoll] = useState(JSON.parse(localStorage.getItem("bestRoll")) || "")
-    const [bestTime, setBestTime] = useState(JSON.parse(localStorage.getItem("bestTime")) || "")
+    const [bestRoll, setBestRoll] = useState(JSON.parse(localStorage.getItem("bestRoll")) || null)
+    const [bestTime, setBestTime] = useState(JSON.parse(localStorage.getItem("bestTime")) || { minutes: 0, seconds: 0 });
     // specify seconds display when there are less then 10 seconds elapsed
     const secondsDisplay = seconds < 10 ? `0${seconds}` : seconds
     // specify time display
@@ -29,15 +29,23 @@ export default function App() {
         const allSameValue = dice.every(die => die.value === firstValue)
         if (allHeld && allSameValue) {
             setTenzies(true)
-            if (!bestRoll) {
-                setBestRoll(localStorage.setItem("bestRoll", JSON.stringify(rolls)))
-            } else if (rolls < bestRoll) {
-                setBestRoll(localStorage.setItem("bestRoll", JSON.stringify(rolls)))
-            }
-            if (!bestTime) {
-                setBestTime(localStorage.setItem("bestTime", JSON.stringify({minutes, seconds})))
-            } else if ({minutes, seconds} < bestTime) {
-                setBestTime("bestTime", JSON.stringify({minutes, seconds}))
+            
+            // update bestRoll if applicable
+            if (bestRoll === null || rolls < bestRoll) {
+                setBestRoll(rolls);
+                localStorage.setItem("bestRoll", JSON.stringify(rolls))
+            } 
+            
+            // Update bestTime if current time is better or if bestTime is at initial value
+            const currentTime = { minutes, seconds }
+             const isNewBestTime = 
+                (bestTime.minutes === 0 && bestTime.seconds === 0) || // initial state
+                (minutes < bestTime.minutes || 
+                (minutes === bestTime.minutes && seconds < bestTime.seconds))
+                
+            if (isNewBestTime) {
+                setBestTime(currentTime);
+                localStorage.setItem("bestTime", JSON.stringify(currentTime));
             }
         }
     }, [dice])
@@ -95,6 +103,10 @@ export default function App() {
         />
     ))
     
+    // Adjust the display of bestTime with conditional logic
+    const bestTimeDisplay = bestTime 
+        ? `Best ⏱️ ${bestTime.minutes}:${bestTime.seconds < 10 ? `0${bestTime.seconds}` : bestTime.seconds}` : "Best ⏱️ -:--";
+    
     return (
         <main>
             {tenzies && <Confetti />}
@@ -104,8 +116,8 @@ export default function App() {
                 <h2 className="rolls">🎲 {rolls}</h2>
             </div>
             <div className="best-scores">
-                <h2 className="best-time">Best ⏱️ {bestTime.minutes}:{bestTime.seconds}</h2>
-                <h2 className="best-roll">Best 🎲 {bestRoll}</h2>
+                <h2 className="best-time">{bestTimeDisplay}</h2>
+                <h2 className="best-roll">{bestRoll !== null ? `Best 🎲 ${bestRoll}` : "Best 🎲 --"}</h2>
             </div>
             <p className="instructions">Roll until all dice are the same. 
             Click each die to freeze it at its current value between rolls.</p>
