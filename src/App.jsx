@@ -109,7 +109,10 @@ export default function App() {
     
     return (
         <main>
-            {tenzies && <Confetti />}
+            {tenzies && <Confetti
+                recycle={false}
+                numberOfPieces={1000}
+            />}
             <h1 className="title">Tenzies</h1>
             <div className="scores">
                 <h2 className="timer">⏱️ {timeDisplay}</h2>
